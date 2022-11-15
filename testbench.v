@@ -1,6 +1,6 @@
 module cputest();
 reg  clock,reset;
-s_cycle_cpu CPU(
+pipeline_cpu CPU(
     .clock(clock),
     .reset(reset)
 );
@@ -14,8 +14,9 @@ always @(posedge clock) begin
    // $display("time=%3d",$time);
    $display("clock=%d",CPU.clock);
    //$display("GPR.numwrite=%h,GPR.datawrite=%h,s_data_write=%d,alu_data=%h",CPU.GPR.num_write,CPU.GPR.data_write,CPU.s_data_write,CPU.alu_data);
-    $display("pc=%h,s_npc=%d",CPU.pc,CPU.s_npc);
-    $display("gpr31=%h,beq_pc=%h",CPU.GPR.gp_registers[31],CPU.beq_pc);
+    $display("pc=%h,instruction=%h",CPU.pc,CPU.instruction);
+    //$display("gpr31=%h,beq_pc=%h",CPU.GPR.gp_registers[31],CPU.beq_pc);
+    $display("reg_write=%d,EXE_reg_write=%d,MEM_reg_write=%d,WB_reg_write=%d",CPU.reg_write,CPU.EXE_reg_write,CPU.MEM_reg_write,CPU.WB_reg_write);
     end
 
 //导入指令，初始化寄存器

@@ -1,13 +1,23 @@
  `include "include.v"
 module ctrl(
     input[31:0]instruction,
+    input reset,
     output reg[5:0]alu_ctrl,
     output reg s_ext,s_b,mem_write,reg_write,
     output reg[1:0]s_num_write,s_data_write,s_npc
 );
 always @(*) begin
-
-    if (instruction[31:26]==6'b000000) begin
+    if(~reset)begin
+         s_b=1'b0;
+        s_ext=1'b1;
+        s_num_write=2'b00;
+        alu_ctrl=`add_op;
+        mem_write=0;
+        s_data_write=2'b01;
+        reg_write=0;
+        s_npc=2'b11;
+    end
+    else if (instruction[31:26]==6'b000000) begin
         s_b=1'b0;
         s_ext=1'b0;
         s_num_write=2'b01;
@@ -49,6 +59,14 @@ always @(*) begin
         end
         default:begin
             alu_ctrl=6'b000000;
+            s_b=1'b0;
+            s_ext=1'b1;
+            s_num_write=2'b00;
+            alu_ctrl=`add_op;
+            mem_write=0;
+            s_data_write=2'b01;
+            reg_write=1;
+            s_npc=2'b11;
         end
     endcase
     end
@@ -179,6 +197,16 @@ always @(*) begin
     else if(instruction[31:26]==6'b000100)
     begin
         s_b=1'b0;
+        s_ext=1'b1;
+        s_num_write=2'b00;
+        alu_ctrl=`add_op;
+        mem_write=0;
+        s_data_write=2'b01;
+        reg_write=0;
+        s_npc=2'b11;
+    end
+    else begin
+            s_b=1'b0;
         s_ext=1'b1;
         s_num_write=2'b00;
         alu_ctrl=`add_op;

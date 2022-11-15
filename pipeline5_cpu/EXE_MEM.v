@@ -10,7 +10,7 @@ module EXE_MEM(
     output reg[1:0]MEM_s_data_write
 );
 
-always @(clock) begin
+always @(posedge clock) begin
     if (reset) begin
         MEM_pc<=EXE_pc;
         MEM_b<=EXE_b;
