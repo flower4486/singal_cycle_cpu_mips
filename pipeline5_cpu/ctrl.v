@@ -64,7 +64,7 @@ always @(*) begin
             s_num_write=2'b00;
             alu_ctrl=`add_op;
             mem_write=0;
-            s_data_write=2'b01;
+            s_data_write=2'b00;
             reg_write=1;
             s_npc=2'b11;
         end

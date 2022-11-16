@@ -17,7 +17,9 @@ always @(posedge clock) begin
     $display("pc=%h,ID_instruction=%h",CPU.ID_pc,CPU.ID_instruction);
     //$display("gpr31=%h,beq_pc=%h",CPU.GPR.gp_registers[31],CPU.beq_pc);
     //$display("reg_write=%d,EXE_reg_write=%d,MEM_reg_write=%d,WB_reg_write=%d",CPU.reg_write,CPU.EXE_reg_write,CPU.MEM_reg_write,CPU.WB_reg_write);
-    $display("forwardA=%d,forwardB=%d,alusrc1=%h,alusrc=%h,alusrc2=%h",CPU.s_forwardA,CPU.s_forwardB,CPU.alusrc1,CPU.alusrc,CPU.alusrc2);
+    //$display("forwardA=%d,forwardB=%d,alusrc1=%h,alusrc=%h,alusrc2=%h",CPU.s_forwardA,CPU.s_forwardB,CPU.alusrc1,CPU.alusrc,CPU.alusrc2);
+    $display("IDsdatawrite=%d,EXE_s_datawrite=%d,MEM_datawrite=%d,wb_data_write",CPU.s_data_write,CPU.EXE_s_data_write,CPU.MEM_s_data_write,CPU.WB_s_data_write);
+    $display("");
     end
 
 //导入指令，初始化寄存器

@@ -1,5 +1,5 @@
 module ID_EXE(
-    input clock,reset,
+    input clock,reset,ID_EXE_flush,
     input[5:0]ID_alu_ctrl,
     output reg[5:0]EXE_alu_ctrl,
     input[1:0]ID_s_data_write,
@@ -14,7 +14,7 @@ module ID_EXE(
     output reg[4:0]EXE_num_write
 );
 always @(posedge clock) begin
-    if (reset) begin
+    if (reset&~ID_EXE_flush) begin
         EXE_alu_ctrl<=ID_alu_ctrl;
         EXE_s_data_write<=ID_s_data_write;
         EXE_s_b<=ID_s_b;

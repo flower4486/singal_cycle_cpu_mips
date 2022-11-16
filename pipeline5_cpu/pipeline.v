@@ -13,6 +13,9 @@ wire[1:0]s_npc;
 // assign abs_addr={pc[31:28],instruction[25:0],2'b0};
 // assign reg_addr=a;
 // assign beq_pc={{16{instruction[15]}},instruction[15:0]<<2}+pc+4;
+//ID级的变量
+wire [31:0]ID_pc,ID_instruction;
+
 //WB级的变量
 wire[31:0]WB_c,WB_pc,WB_data_read,WB_data_write;
 wire[1:0]WB_s_data_write;
@@ -24,13 +27,23 @@ wire[31:0]MEM_pc,MEM_b,MEM_c;
 wire[4:0]MEM_num_write;
 wire[1:0]MEM_s_data_write;
 wire MEM_reg_write,MEM_mem_write;
+
+//EXE级的变量
+wire [5:0]EXE_alu_ctrl;
+wire[1:0]EXE_s_data_write;
+wire EXE_s_b,EXE_mem_write,EXE_reg_write;
+wire[31:0]EXE_a,EXE_b,EXE_pc,EXE_ex_imm;
+wire[4:0]EXE_num_write;
+//旁路的变量
+wire ID_forwardA,ID_forwardB;
+wire pc_write,IF_ID_write,ID_EXE_flush;
 pc PC(
 .pc(pc),
 .clock(clock),
 .reset(reset),
 .npc(npc)
 );
-assign npc=pc+4;
+assign npc=(pc_write==1'b1)?pc:pc+4;
 // mux2to1_32 beq2to1(
 //     .num1(beq_pc),
 //     .num2(pc+4),
@@ -50,11 +63,24 @@ im IM(
     .instruction(instruction),
     .pc(pc)
 );
+
+blockside BLOCKSIDE(
+    .EXE_num_write(EXE_num_write),
+    .rs(rs),
+    .rt(rt),
+    .op(ID_instruction[31:26]),
+    .EXE_s_data_write(EXE_s_data_write),
+    .EXE_reg_write(EXE_reg_write),
+    .IF_ID_write(IF_ID_write),
+    .ID_EXE_flush(ID_EXE_flush),
+    .pc_write(pc_write)
+);
 //IF_ID寄存器//////////////////////////////////////////////////////////////////////////////////
-wire [31:0]ID_pc,ID_instruction;
+
 IF_ID tranIF_ID(
     .clock(clock),
     .reset(reset),
+    .IF_ID_write(IF_ID_write),
     .IF_pc(pc),
     .IF_instruction(instruction),
     .ID_pc(ID_pc),
@@ -95,7 +121,7 @@ mux3to1_5 mux_wreg(
     .sel(s_num_write),
     .result(num_write)
 );
-
+wire[31:0]rs_data,rt_data;
 gpr GPR(
 .a(a),
 .b(b),
@@ -106,15 +132,26 @@ gpr GPR(
 .num_write(WB_num_write),
 .data_write(WB_data_write)
 );
+mux2to1_32 RSDATA(
+    .num1(WB_data_write),
+    .num2(a),
+    .sel(ID_forwardA),
+    .result(rs_data)
+);
+
+mux2to1_32 RTDATA(
+.num1(WB_data_write),
+    .num2(b),
+    .sel(ID_forwardB),
+    .result(rt_data)
+);
+
 //ID_EXE寄存器////////////////////////////////////////////////////////////////////////////
-wire [5:0]EXE_alu_ctrl;
-wire[1:0]EXE_s_data_write;
-wire EXE_s_b,EXE_mem_write,EXE_reg_write;
-wire[31:0]EXE_a,EXE_b,EXE_pc,EXE_ex_imm;
-wire[4:0]EXE_num_write;
+
 ID_EXE tarnID_EXE(
     .clock(clock),
     .reset(reset),
+    .ID_EXE_flush(ID_EXE_flush),
     .ID_alu_ctrl(alu_ctrl),
     .EXE_alu_ctrl(EXE_alu_ctrl),
     .ID_s_data_write(s_data_write),
@@ -126,8 +163,8 @@ ID_EXE tarnID_EXE(
     .EXE_mem_write(EXE_mem_write),
     .EXE_reg_write(EXE_reg_write),
     .ID_pc(ID_pc),
-    .ID_a(a),
-    .ID_b(b),
+    .ID_a(rs_data),
+    .ID_b(rt_data),
     .EXE_pc(EXE_pc),
     .EXE_a(EXE_a),
     .EXE_b(EXE_b),
@@ -136,26 +173,34 @@ ID_EXE tarnID_EXE(
     .ID_num_write(num_write),
     .EXE_num_write(EXE_num_write)
 );
-wire s_forwardA,s_forwardB;
+wire[1:0] s_forwardA,s_forwardB;
 wire[31:0]alusrc1,alusrc2;
 side SIDE(
     .clock(clock),
     .EXE_num_write(EXE_num_write),
+    .MEM_num_write(MEM_num_write),
+    .WB_num_write(WB_num_write),
     .rs(rs),
     .rt(rt),
     .EXE_reg_write(EXE_reg_write),
+    .WB_reg_write(WB_reg_write),
+    .MEM_reg_write(MEM_reg_write),
     .s_forwardA(s_forwardA),
-    .s_forwardB(s_forwardB)
+    .s_forwardB(s_forwardB),
+    .ID_forwardA(ID_forwardA),
+    .ID_forwardB(ID_forwardB)
 );
-mux2to1_32 ALUSRC1(
+mux3to1_32 ALUSRC1(
     .num1(MEM_c),
-    .num2(EXE_a),
+    .num2(WB_data_write),
+    .num3(EXE_a),
     .sel(s_forwardA),
     .result(alusrc1)
 );
-mux2to1_32 ALUSRC2(
+mux3to1_32 ALUSRC2(
     .num1(MEM_c),
-    .num2(EXE_b),
+    .num2(WB_data_write),
+    .num3(EXE_b),
     .sel(s_forwardB),
     .result(alusrc)
 );
@@ -194,13 +239,30 @@ EXE_MEM tranEXE_MEM(
     .EXE_s_data_write(EXE_s_data_write),
     .MEM_s_data_write(MEM_s_data_write)
 );
+wire[31:0] DM_datain;
+memside MEMSIDE(
+    .clock(clock),
+    .MEM_num_write(MEM_num_write),
+    .WB_num_write(WB_num_write),
+    .WB_s_data_write(WB_s_data_write),
+    .MEM_mem_write(MEM_mem_write),
+    .WB_reg_write(WB_reg_write),
+    .MEM_forward(MEM_forward)
+);
+
+mux2to1_32 DMDATA(
+    .num1(MEM_b),
+    .num2(WB_data_read),
+    .sel(MEM_forward),
+    .result(DM_datain)
+);
 
 dm DM(
  .data_out(data_read),
  .clock(clock),
  .mem_write(MEM_mem_write),
  .address(MEM_c),
- .data_in(MEM_b)
+ .data_in(DM_datain)
 );
 
 ///////////MEM_WB寄存器////////////////////////////////////////
