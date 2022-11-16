@@ -19,6 +19,11 @@ wire[1:0]WB_s_data_write;
 wire WB_reg_write;
 wire[4:0]WB_num_write;
 
+//MEM级的变量
+wire[31:0]MEM_pc,MEM_b,MEM_c;
+wire[4:0]MEM_num_write;
+wire[1:0]MEM_s_data_write;
+wire MEM_reg_write,MEM_mem_write;
 pc PC(
 .pc(pc),
 .clock(clock),
@@ -131,26 +136,46 @@ ID_EXE tarnID_EXE(
     .ID_num_write(num_write),
     .EXE_num_write(EXE_num_write)
 );
+wire s_forwardA,s_forwardB;
+wire[31:0]alusrc1,alusrc2;
+side SIDE(
+    .clock(clock),
+    .EXE_num_write(EXE_num_write),
+    .rs(rs),
+    .rt(rt),
+    .EXE_reg_write(EXE_reg_write),
+    .s_forwardA(s_forwardA),
+    .s_forwardB(s_forwardB)
+);
+mux2to1_32 ALUSRC1(
+    .num1(MEM_c),
+    .num2(EXE_a),
+    .sel(s_forwardA),
+    .result(alusrc1)
+);
+mux2to1_32 ALUSRC2(
+    .num1(MEM_c),
+    .num2(EXE_b),
+    .sel(s_forwardB),
+    .result(alusrc)
+);
 
 mux2to1_32 mux_alusrc(
-    .num1(EXE_b),
+    .num1(alusrc),
     .num2(EXE_ex_imm),
     .sel(EXE_s_b),
-    .result(alusrc)//exe级内部信号
+    .result(alusrc2)//exe级内部信号
 );
 alu ALU(
     .zero(zero),
     .c(EXE_c),
-    .a(EXE_a),
-    .b(alusrc),
+    .a(alusrc1),
+    .b(alusrc2),
     .alu_ctrl(EXE_alu_ctrl)
 );
 
 ////EXE_MEM寄存器////////////////////////////////////////////////////////////////
-wire[31:0]MEM_pc,MEM_b,MEM_c;
-wire[4:0]MEM_num_write;
-wire[1:0]MEM_s_data_write;
-wire MEM_reg_write,MEM_mem_write;
+
 EXE_MEM tranEXE_MEM(
     .reset(reset),
     .clock(clock),
