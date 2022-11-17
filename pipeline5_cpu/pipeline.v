@@ -86,6 +86,13 @@ IF_ID tranIF_ID(
     .ID_pc(ID_pc),
     .ID_instruction(ID_instruction)
 );
+wire[31:0]abs_addr,reg_addr,beq_pc;
+//pc多选器
+assign abs_addr={pc[31:28],instruction[25:0],2'b0};
+assign reg_addr=a;
+assign beq_pc={{16{instruction[15]}},instruction[15:0]<<2}+pc+4;
+dsadsa
+
 
 //控制信号
 wire[5:0]alu_ctrl;
