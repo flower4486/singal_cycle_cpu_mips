@@ -45,12 +45,6 @@ pc PC(
 .npc(npc)
 );
 //assign npc=;
-// mux2to1_32 beq2to1(
-//     .num1(beq_pc),
-//     .num2(pc+4),
-//     .sel(zero),
-//     .result(beq_addr)
-// );
 
 // mux4to1_32 mux_pc(
 //     .num1(pc+4),
@@ -92,16 +86,23 @@ wire ID_zero;
 //pc多选器
 assign abs_addr={ID_pc[31:28],ID_instruction[25:0],2'b0};
 assign reg_addr=rs_data;
+assign zero=(rs_data-rt_data==0)?1'b0:1'b1;
 assign beq_pc={{16{ID_instruction[15]}},ID_instruction[15:0]<<2}+ID_pc+4;
+mux2to1_32 beq2to1(
+    .num1(beq_pc),
+    .num2(pc+4),
+    .sel(zero),
+    .result(beq_addr)
+);
 mux4to1_32 mux_pc(
     .num1((pc_write==1'b1)?pc:pc+4),//这么搞是为了lw的阻塞
     .num2(abs_addr),
     .num3(reg_addr),
-    .num4(32'b0),
+    .num4(beq_addr),
     .sel(s_npc),
     .result(npc)
 );
-assign IF_ID_flush=(s_npc==2'b00)?1'b0:1'b1;
+assign IF_ID_flush=(s_npc==2'b00||(s_npc==2'b11&&zero))?1'b0:1'b1;
 
 //控制信号
 wire[5:0]alu_ctrl;
@@ -233,7 +234,7 @@ mux2to1_32 mux_alusrc(
 );
 alu ALU(
     .sa(EXE_sa),
-    .zero(zero),
+
     .c(EXE_c),
     .a(alusrc1),
     .b(alusrc2),

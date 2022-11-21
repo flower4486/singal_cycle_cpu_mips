@@ -1,6 +1,5 @@
  `include "include.v"
-module alu(c,a,b,alu_ctrl,zero,sa);
-output  zero;
+module alu(c,a,b,alu_ctrl,sa);
 output reg[31:0] c;
 input [31:0] a;
 input [31:0] b;
@@ -24,7 +23,7 @@ assign sll_result=b<<sa;
 assign lui_result={b[15:0],{16{1'b0}}};
 
 
-assign zero=(a-b==0)?1'b0:1'b1;
+
 always @* begin
         case (alu_ctrl)
                 `add_op:c=add_result;
