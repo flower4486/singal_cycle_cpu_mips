@@ -11,4 +11,4 @@
 `define or_op 6'b000101
 `define slt_op 6'b000110
 `define lui_op 6'b000111
- 
+ `define sll_op 6'b001000

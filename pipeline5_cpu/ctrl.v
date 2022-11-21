@@ -15,7 +15,7 @@ always @(*) begin
         mem_write=0;
         s_data_write=2'b01;
         reg_write=0;
-        s_npc=2'b11;
+        s_npc=2'b00;
     end
     else if (instruction[31:26]==6'b000000) begin
         s_b=1'b0;
@@ -50,6 +50,10 @@ always @(*) begin
         6'b101010 :begin
             alu_ctrl=`slt_op;
         end
+        //sll
+        6'b000000:begin
+            alu_ctrl=`sll_op;
+        end
         //jr
         6'b001000 :begin
             alu_ctrl=6'b0;
@@ -65,8 +69,8 @@ always @(*) begin
             alu_ctrl=`add_op;
             mem_write=0;
             s_data_write=2'b00;
-            reg_write=1;
-            s_npc=2'b11;
+            reg_write=0;
+            s_npc=2'b00;
         end
     endcase
     end

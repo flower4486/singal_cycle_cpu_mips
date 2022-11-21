@@ -15,7 +15,7 @@ wire[1:0]s_npc;
 // assign beq_pc={{16{instruction[15]}},instruction[15:0]<<2}+pc+4;
 //ID级的变量
 wire [31:0]ID_pc,ID_instruction;
-
+wire[31:0]rs_data,rt_data;
 //WB级的变量
 wire[31:0]WB_c,WB_pc,WB_data_read,WB_data_write;
 wire[1:0]WB_s_data_write;
@@ -33,17 +33,18 @@ wire [5:0]EXE_alu_ctrl;
 wire[1:0]EXE_s_data_write;
 wire EXE_s_b,EXE_mem_write,EXE_reg_write;
 wire[31:0]EXE_a,EXE_b,EXE_pc,EXE_ex_imm;
-wire[4:0]EXE_num_write;
+wire[4:0]EXE_num_write,sa,EXE_sa;
+
 //旁路的变量
 wire ID_forwardA,ID_forwardB;
-wire pc_write,IF_ID_write,ID_EXE_flush;
+wire pc_write,IF_ID_write,ID_EXE_flush,IF_ID_flush;
 pc PC(
 .pc(pc),
 .clock(clock),
 .reset(reset),
 .npc(npc)
 );
-assign npc=(pc_write==1'b1)?pc:pc+4;
+//assign npc=;
 // mux2to1_32 beq2to1(
 //     .num1(beq_pc),
 //     .num2(pc+4),
@@ -81,18 +82,26 @@ IF_ID tranIF_ID(
     .clock(clock),
     .reset(reset),
     .IF_ID_write(IF_ID_write),
+    .IF_ID_flush(IF_ID_flush),
     .IF_pc(pc),
     .IF_instruction(instruction),
     .ID_pc(ID_pc),
     .ID_instruction(ID_instruction)
 );
-wire[31:0]abs_addr,reg_addr,beq_pc;
+wire ID_zero;
 //pc多选器
-assign abs_addr={pc[31:28],instruction[25:0],2'b0};
-assign reg_addr=a;
-assign beq_pc={{16{instruction[15]}},instruction[15:0]<<2}+pc+4;
-dsadsa
-
+assign abs_addr={ID_pc[31:28],ID_instruction[25:0],2'b0};
+assign reg_addr=rs_data;
+assign beq_pc={{16{ID_instruction[15]}},ID_instruction[15:0]<<2}+ID_pc+4;
+mux4to1_32 mux_pc(
+    .num1((pc_write==1'b1)?pc:pc+4),//这么搞是为了lw的阻塞
+    .num2(abs_addr),
+    .num3(reg_addr),
+    .num4(32'b0),
+    .sel(s_npc),
+    .result(npc)
+);
+assign IF_ID_flush=(s_npc==2'b00)?1'b0:1'b1;
 
 //控制信号
 wire[5:0]alu_ctrl;
@@ -112,8 +121,10 @@ ctrl CTRL(
 );
 assign rs=ID_instruction[25:21];
 assign rt=ID_instruction[20:16];
+assign sa=ID_instruction[10:6];
 wire [15:0]imm;
 assign imm=ID_instruction[15:0];
+
 
 eximm16 eximm16(
     .num16(imm),
@@ -128,7 +139,7 @@ mux3to1_5 mux_wreg(
     .sel(s_num_write),
     .result(num_write)
 );
-wire[31:0]rs_data,rt_data;
+
 gpr GPR(
 .a(a),
 .b(b),
@@ -158,6 +169,8 @@ mux2to1_32 RTDATA(
 ID_EXE tarnID_EXE(
     .clock(clock),
     .reset(reset),
+    .ID_sa(sa),
+    .EXE_sa(EXE_sa),
     .ID_EXE_flush(ID_EXE_flush),
     .ID_alu_ctrl(alu_ctrl),
     .EXE_alu_ctrl(EXE_alu_ctrl),
@@ -219,6 +232,7 @@ mux2to1_32 mux_alusrc(
     .result(alusrc2)//exe级内部信号
 );
 alu ALU(
+    .sa(EXE_sa),
     .zero(zero),
     .c(EXE_c),
     .a(alusrc1),

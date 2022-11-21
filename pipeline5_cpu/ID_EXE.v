@@ -10,8 +10,8 @@ module ID_EXE(
     output reg[31:0]EXE_pc,EXE_a,EXE_b,
     input[31:0]ID_ex_imm,
     output reg[31:0]EXE_ex_imm,
-    input[4:0]ID_num_write,
-    output reg[4:0]EXE_num_write
+    input[4:0]ID_num_write,ID_sa,
+    output reg[4:0]EXE_num_write,EXE_sa
 );
 always @(posedge clock) begin
     if (reset&~ID_EXE_flush) begin
@@ -25,6 +25,7 @@ always @(posedge clock) begin
         EXE_b<=ID_b;
         EXE_ex_imm<=ID_ex_imm;
         EXE_num_write<=ID_num_write;
+        EXE_sa<=ID_sa;
     end
     else begin
         EXE_alu_ctrl<=6'b0;
@@ -37,6 +38,7 @@ always @(posedge clock) begin
         EXE_b<=32'b0;
         EXE_ex_imm<=32'b0;
         EXE_num_write<=5'b0;
+        EXE_sa<=5'b0;
     end
 end
 endmodule
