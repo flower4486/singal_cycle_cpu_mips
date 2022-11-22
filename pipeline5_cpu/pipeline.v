@@ -62,11 +62,14 @@ im IM(
 
 blockside BLOCKSIDE(
     .EXE_num_write(EXE_num_write),
+    .MEM_num_write(MEM_num_write),
     .rs(rs),
     .rt(rt),
     .op(ID_instruction[31:26]),
     .EXE_s_data_write(EXE_s_data_write),
     .EXE_reg_write(EXE_reg_write),
+    .MEM_s_data_write(MEM_s_data_write),
+    .MEM_reg_write(MEM_reg_write),
     .IF_ID_write(IF_ID_write),
     .ID_EXE_flush(ID_EXE_flush),
     .pc_write(pc_write)

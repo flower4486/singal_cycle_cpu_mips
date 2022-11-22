@@ -36,21 +36,23 @@ end
 
 
 always@(*)begin
-  if (WB_num_write==rs&&WB_reg_write==1'b1&&rs!=5'b0&&op!=6'b000100) begin
-    ID_forwardA=2'b00;
-  end
-  else if(MEM_num_write==rs&&MEM_reg_write==1'b1&&rs!=5'b0&&op==6'b000100&&MEM_s_data_write==2'b00)begin
+  if(MEM_num_write==rs&&MEM_reg_write==1'b1&&rs!=5'b0&&op==6'b000100&&MEM_s_data_write==2'b00)begin
      ID_forwardA=2'b10;
   end
+  else if (WB_num_write==rs&&WB_reg_write==1'b1&&rs!=5'b0) begin
+    ID_forwardA=2'b00;
+  end
+
   else begin
     ID_forwardA=2'b01;
   end
-  if (WB_num_write==rt&&WB_reg_write==1'b1&&rt!=5'b0&&op!=6'b000100) begin
+  if(MEM_num_write==rt&&MEM_reg_write==1'b1&&rt!=5'b0&&op==6'b000100&&MEM_s_data_write==2'b00)begin
+     ID_forwardB=2'b10;   
+  end
+  else if (WB_num_write==rt&&WB_reg_write==1'b1&&rt!=5'b0) begin
     ID_forwardB=2'b00;
   end
-  else if(MEM_num_write==rt&&MEM_reg_write==1'b1&&rt!=5'b0&&op==6'b000100&&MEM_s_data_write==2'b00)begin
-     ID_forwardB=2'b10;
-  end
+
   else begin
     ID_forwardB=2'b01;
   end

@@ -1,8 +1,8 @@
 module blockside (
-    input[4:0]EXE_num_write,rs,rt,
+    input[4:0]EXE_num_write,rs,rt,MEM_num_write,
     input[5:0]op,
-    input[1:0]EXE_s_data_write,s_npc,
-    input EXE_reg_write,
+    input[1:0]EXE_s_data_write,s_npc,MEM_s_data_write,
+    input EXE_reg_write,MEM_reg_write,
     output reg IF_ID_write,ID_EXE_flush,pc_write
 );
     always@(*)begin
@@ -25,6 +25,16 @@ module blockside (
             ID_EXE_flush<=1'b1;
             pc_write<=1'b1;
         end//这是控制冒险阻塞
+        else if(
+        (MEM_num_write==rs||MEM_num_write==rt)&&
+        MEM_reg_write==1'b1&&
+        op==6'b000100&&
+        MEM_s_data_write==2'b01
+        )begin
+            IF_ID_write<=1'b1;
+            ID_EXE_flush<=1'b1;
+            pc_write<=1'b1;
+        end//控制冒险第二次阻塞
         else begin
             IF_ID_write<=1'b0;
             ID_EXE_flush<=1'b0;
