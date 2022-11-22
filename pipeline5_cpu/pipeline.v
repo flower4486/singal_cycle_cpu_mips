@@ -36,10 +36,11 @@ wire[31:0]EXE_a,EXE_b,EXE_pc,EXE_ex_imm;
 wire[4:0]EXE_num_write,sa,EXE_sa;
 
 //旁路的变量
-wire ID_forwardA,ID_forwardB;
+wire[1:0] ID_forwardA,ID_forwardB;
 wire pc_write,IF_ID_write,ID_EXE_flush,IF_ID_flush;
 pc PC(
 .pc(pc),
+.pc_write(pc_write),
 .clock(clock),
 .reset(reset),
 .npc(npc)
@@ -95,7 +96,7 @@ mux2to1_32 beq2to1(
     .result(beq_addr)
 );
 mux4to1_32 mux_pc(
-    .num1((pc_write==1'b1)?pc:pc+4),//这么搞是为了lw的阻塞
+    .num1(pc+4),//这么搞是为了lw的阻塞
     .num2(abs_addr),
     .num3(reg_addr),
     .num4(beq_addr),
@@ -151,16 +152,18 @@ gpr GPR(
 .num_write(WB_num_write),
 .data_write(WB_data_write)
 );
-mux2to1_32 RSDATA(
+mux3to1_32 RSDATA(
     .num1(WB_data_write),
     .num2(a),
+    .num3(MEM_c),
     .sel(ID_forwardA),
     .result(rs_data)
 );
 
-mux2to1_32 RTDATA(
-.num1(WB_data_write),
+mux3to1_32 RTDATA(
+    .num1(WB_data_write),
     .num2(b),
+    .num3(MEM_c),
     .sel(ID_forwardB),
     .result(rt_data)
 );
@@ -198,11 +201,13 @@ wire[1:0] s_forwardA,s_forwardB;
 wire[31:0]alusrc1,alusrc2;
 side SIDE(
     .clock(clock),
+    .MEM_s_data_write(MEM_s_data_write),
     .EXE_num_write(EXE_num_write),
     .MEM_num_write(MEM_num_write),
     .WB_num_write(WB_num_write),
     .rs(rs),
     .rt(rt),
+    .op(ID_instruction[31:26]),
     .EXE_reg_write(EXE_reg_write),
     .WB_reg_write(WB_reg_write),
     .MEM_reg_write(MEM_reg_write),
@@ -247,7 +252,7 @@ EXE_MEM tranEXE_MEM(
     .reset(reset),
     .clock(clock),
     .EXE_pc(EXE_pc),
-    .EXE_b(EXE_b),
+    .EXE_b(alusrc),
     .EXE_c(EXE_c),
     .EXE_num_write(EXE_num_write),
     .MEM_pc(MEM_pc),

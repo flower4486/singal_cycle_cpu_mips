@@ -7,17 +7,7 @@ module ctrl(
     output reg[1:0]s_num_write,s_data_write,s_npc
 );
 always @(*) begin
-    if(~reset)begin
-         s_b=1'b0;
-        s_ext=1'b1;
-        s_num_write=2'b00;
-        alu_ctrl=`add_op;
-        mem_write=0;
-        s_data_write=2'b01;
-        reg_write=0;
-        s_npc=2'b00;
-    end
-    else if (instruction[31:26]==6'b000000) begin
+ if (instruction[31:26]==6'b000000) begin
         s_b=1'b0;
         s_ext=1'b0;
         s_num_write=2'b01;
